@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>REPORT WHATSAPP</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070d; --bg2:#0a0f1c; --card:#0f1626; --line:#1d2a44;
+  --acc:#22e6a5; --acc2:#3b82f6; --danger:#ef4444; --txt:#e6edf7; --mut:#7a8aa8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:0;opacity:.55}
+.glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);z-index:0;pointer-events:none}
+.glow.a{background:#22e6a533;top:-200px;left:-100px;animation:drift 18s ease-in-out infinite}
+.glow.b{background:#3b82f633;bottom:-200px;right:-100px;animation:drift 22s ease-in-out infinite reverse}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,-60px)}}
+
+/* LOGIN */
+#login{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#0a1526,#05070d 70%)}
+.login-card{width:min(420px,92vw);background:linear-gradient(180deg,#0f1626,#0a0f1c);border:1px solid var(--line);border-radius:20px;padding:38px 30px;box-shadow:0 30px 80px #000a,0 0 0 1px #22e6a51a inset;animation:pop .5s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden}
+.login-card::before{content:"";position:absolute;inset:-2px;border-radius:22px;background:conic-gradient(from 0deg,transparent,#22e6a5,transparent 40%);animation:spin 4s linear infinite;z-index:-1;opacity:.6}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.brand .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-weight:700;font-size:20px;color:#05070d;box-shadow:0 0 24px #22e6a566;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 24px #22e6a566}50%{box-shadow:0 0 40px #22e6a5aa}}
+.brand h1{font-size:22px;letter-spacing:1px}
+.brand h1 span{color:var(--acc)}
+.sub{color:var(--mut);font-size:13px;margin-bottom:26px;font-family:'JetBrains Mono',monospace}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;color:var(--mut);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
+.field input{width:100%;padding:14px 16px;background:#05070d;border:1px solid var(--line);border-radius:12px;color:var(--txt);font-size:15px;font-family:'JetBrains Mono',monospace;transition:.2s}
+.field input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px #22e6a522}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;letter-spacing:.5px;background:linear-gradient(135deg,var(--acc),#16b884);color:#05070d;transition:.2s;position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px #22e6a544}
+.btn:active{transform:translateY(0)}
+.btn.danger{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff}
+.err{color:var(--danger);font-size:13px;margin-top:12px;text-align:center;min-height:18px;font-family:'JetBrains Mono',monospace}
+
+/* APP */
+#app{display:none;position:relative;z-index:5;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:#05070dcc;backdrop-filter:blur(14px);position:sticky;top:0;z-index:20}
+.topbar .left{display:flex;align-items:center;gap:14px}
+.hamburger{width:44px;height:44px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;transition:.2s}
+.hamburger:hover{border-color:var(--acc);background:#0f1f2e}
+.hamburger div{width:20px;height:2px;background:var(--txt);margin:3px 0;transition:.3s;border-radius:2px}
+.hamburger.open div:nth-child(1){transform:translateY(8px) rotate(45deg)}
+.hamburger.open div:nth-child(2){opacity:0}
+.hamburger.open div:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.topbar .brand h1{font-size:17px}
+.topbar .user{display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mut)}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;color:#05070d;font-weight:700;font-size:14px}
+.logout{background:transparent;border:1px solid var(--line);color:var(--mut);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:12px;transition:.2s}
+.logout:hover{border-color:var(--danger);color:var(--danger)}
+
+.layout{display:flex;min-height:calc(100vh - 77px)}
+.sidebar{width:280px;background:linear-gradient(180deg,#0a0f1c,#05070d);border-right:1px solid var(--line);padding:22px 16px;position:fixed;top:77px;bottom:0;left:0;transform:translateX(-100%);transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:15;overflow-y:auto}
+.sidebar.open{transform:translateX(0)}
+.sidebar h3{font-size:11px;color:var(--mut);letter-spacing:2px;margin:18px 10px 10px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;color:var(--mut);font-size:14px;transition:.2s;margin-bottom:4px}
+.nav-item:hover{background:#0f1f2e;color:var(--txt)}
+.nav-item.active{background:linear-gradient(90deg,#22e6a522,transparent);color:var(--acc);border-left:2px solid var(--acc)}
+.nav-item .ico{width:20px;text-align:center;font-size:16px}
+
+.main{flex:1;padding:28px 22px;margin-left:0;transition:margin-left .35s;max-width:1400px;width:100%;margin-inline:auto}
+.sidebar.open ~ .main{margin-left:280px;max-width:calc(100% - 280px)}
+
+.hero{margin-bottom:28px}
+.hero h2{font-size:28px;letter-spacing:-.5px;margin-bottom:6px}
+.hero p{color:var(--mut);font-size:14px;font-family:'JetBrains Mono',monospace}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.stat{background:linear-gradient(180deg,var(--card),#0a0f1c);border:1px solid var(--line);border-radius:16px;padding:18px;position:relative;overflow:hidden;transition:.3s}
+.stat:hover{border-color:var(--acc);transform:translateY(-3px);box-shadow:0 10px 40px #22e6a51a}
+.stat::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));opacity:.7}
+.stat .lbl{font-size:11px;color:var(--mut);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.stat .val{font-size:30px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--acc)}
+.stat.blue .val{color:var(--acc2)}
+.stat.red .val{color:var(--danger)}
+
+.panel{background:linear-gradient(180deg,var(--card),#0a0f1c);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:22px;position:relative;overflow:hidden}
+.panel h3{font-size:15px;margin-bottom:18px;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+.panel h3::before{content:"";width:4px;height:16px;background:var(--acc);border-radius:2px;box-shadow:0 0 12px var(--acc)}
+
+.form-row{display:grid;gap:16px;margin-bottom:16px}
+.form-row.two{grid-template-columns:1fr 1fr}
+@media(max-width:700px){.form-row.two{grid-template-columns:1fr}}
+.input{width:100%;padding:14px 16px;background:#05070d;border:1px solid var(--line);border-radius:12px;color:var(--txt);font-size:14px;font-family:'JetBrains Mono',monospace;transition:.2s}
+.input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px #22e6a522}
+label.fl{display:block;font-size:12px;color:var(--mut);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
+
+.btn-row{display:flex;gap:12px;flex-wrap:wrap}
+.btn.acc{background:linear-gradient(135deg,var(--acc),#16b884);color:#05070d;width:auto;padding:14px 28px}
+.btn.blue{background:linear-gradient(135deg,var(--acc2),#1d4ed8);color:#fff;width:auto;padding:14px 28px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);width:auto;padding:14px 28px}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+
+.jobs{display:flex;flex-direction:column;gap:12px}
+.job{background:#0a0f1c;border:1px solid var(--line);border-radius:14px;padding:16px;transition:.2s;animation:slideIn .4s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.job:hover{border-color:var(--acc)}
+.job .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.job .target{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--txt)}
+.job .status{font-size:11px;padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;text-transform:uppercase}
+.status.running{background:#22e6a522;color:var(--acc);border:1px solid #22e6a555;animation:blink 1.2s infinite}
+.status.done{background:#3b82f622;color:var(--acc2);border:1px solid #3b82f655}
+.status.cancelled{background:#ef444422;color:var(--danger);border:1px solid #ef444455}
+.status.queued{background:#7a8aa822;color:var(--mut);border:1px solid #7a8aa855}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+.job .meta{display:flex;gap:18px;font-size:12px;color:var(--mut);font-family:'JetBrains Mono',monospace;margin-bottom:8px;flex-wrap:wrap}
+.job .meta b{color:var(--acc)}
+.progress{height:6px;background:#05070d;border-radius:3px;overflow:hidden;margin-top:10px}
+.progress > div{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0;transition:width .4s ease;box-shadow:0 0 10px var(--acc)}
+.job .log{margin-top:12px;background:#05070d;border-radius:10px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;max-height:140px;overflow-y:auto;color:var(--mut);border:1px solid var(--line)}
+.job .log div{padding:2px 0}
+.job .log .ok{color:var(--acc)}
+.job .log .fail{color:var(--danger)}
+.empty{text-align:center;padding:40px;color:var(--mut);font-family:'JetBrains Mono',monospace;font-size:13px}
+
+.view{display:none;animation:fadeIn .4s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--acc);padding:14px 20px;border-radius:12px;z-index:100;font-size:14px;box-shadow:0 10px 40px #000a;transform:translateY(120px);transition:.4s;font-family:'JetBrains Mono',monospace}
+.toast.show{transform:translateY(0)}
+.toast.err{border-color:var(--danger)}
+
+@media(max-width:900px){
+  .sidebar.open ~ .main{margin-left:0;max-width:100%}
+  .sidebar{box-shadow:20px 0 60px #000a}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="glow a"></div>
+<div class="glow b"></div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-card">
+    <div class="brand">
+      <div class="logo">R</div>
+      <h1>REPORT <span>WHATSAPP</span></h1>
+    </div>
+    <div class="sub">// secure access terminal</div>
+    <div class="field">
+      <label>Username</label>
+      <input id="u" autocomplete="username" placeholder="enter username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="p" type="password" autocomplete="current-password" placeholder="enter password"/>
+    </div>
+    <button class="btn" id="loginBtn">MASUK</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="left">
+      <div class="hamburger" id="hamburger"><div></div><div></div><div></div></div>
+      <div class="brand" style="display:flex;align-items:center;gap:10px">
+        <div class="logo" style="width:32px;height:32px;font-size:15px">R</div>
+        <h1 style="font-size:16px">REPORT <span>WHATSAPP</span></h1>
+      </div>
+    </div>
+    <div class="user">
+      <span id="uname">User1123</span>
+      <div class="avatar">U</div>
+      <button class="logout" id="logoutBtn">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <h3>Menu</h3>
+      <div class="nav-item active" data-view="dashboard"><span class="ico">◧</span> Dashboard</div>
+      <div class="nav-item" data-view="report"><span class="ico">⚡</span> Auto Report</div>
+      <div class="nav-item" data-view="jobs"><span class="ico">⧉</span> Riwayat Job</div>
+      <div class="nav-item" data-view="stats"><span class="ico">◈</span> Statistik</div>
+      <h3>Tools</h3>
+      <div class="nav-item" data-view="about"><span class="ico">ℹ</span> Tentang</div>
+    </aside>
+
+    <main class="main">
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="hero">
+          <h2>Dashboard</h2>
+          <p>// monitoring & control center</p>
+        </div>
+        <div class="stats" id="statsGrid">
+          <div class="stat"><div class="lbl">Total Jobs</div><div class="val" id="sJobs">0</div></div>
+          <div class="stat blue"><div class="lbl">Report Terkirim</div><div class="val" id="sSent">0</div></div>
+          <div class="stat red"><div class="lbl">Gagal</div><div class="val" id="sFail">0</div></div>
+          <div class="stat"><div class="lbl">Running</div><div class="val" id="sRun">0</div></div>
+        </div>
+        <div class="panel">
+          <h3>Quick Start</h3>
+          <p style="color:var(--mut);font-size:13px;margin-bottom:16px;font-family:'JetBrains Mono',monospace">
+            Buka sidebar (☰) → pilih <b style="color:var(--acc)">Auto Report</b> → masukkan nomor target / link group → tekan Kirim.
+          </p>
+          <div class="btn-row">
+            <button class="btn acc" onclick="go('report')">Buka Auto Report</button>
+            <button class="btn ghost" onclick="go('jobs')">Lihat Riwayat</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="view" id="view-report">
+        <div class="hero">
+          <h2>Auto Report</h2>
+          <p>// dispatch engine</p>
+        </div>
+        <div class="panel">
+          <h3>Form Report</h3>
+          <div class="form-row">
+            <div>
+              <label class="fl">Nomer target / Link group target</label>
+              <input class="input" id="target" placeholder="628xxxxxxxxxx atau https://chat.whatsapp.com/xxxxx"/>
+            </div>
+          </div>
+          <div class="form-row two">
+            <div>
+              <label class="fl">Jumlah report</label>
+              <input class="input" id="count" type="number" value="30" min="1" max="500"/>
+            </div>
+            <div>
+              <label class="fl">Alasan</label>
+              <input class="input" id="reasonMode" value="auto alasan / auto nomer pengirim" readonly style="color:var(--acc)"/>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn acc" id="sendBtn">⚡ KIRIM REPORT</button>
+            <button class="btn ghost" onclick="go('jobs')">Riwayat</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Live Job</h3>
+          <div id="liveJob" class="empty">Belum ada job aktif. Kirim report untuk mulai.</div>
+        </div>
+      </div>
+
+      <!-- JOBS -->
+      <div class="view" id="view-jobs">
+        <div class="hero">
+          <h2>Riwayat Job</h2>
+          <p>// log dispatcher</p>
+        </div>
+        <div class="panel">
+          <div class="jobs" id="jobsList"><div class="empty">Belum ada job.</div></div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="view" id="view-stats">
+        <div class="hero">
+          <h2>Statistik</h2>
+          <p>// aggregated metrics</p>
+        </div>
+        <div class="stats" id="statsGrid2">
+          <div class="stat"><div class="lbl">Total Jobs</div><div class="val" id="s2Jobs">0</div></div>
+          <div class="stat blue"><div class="lbl">Terkirim</div><div class="val" id="s2Sent">0</div></div>
+          <div class="stat red"><div class="lbl">Gagal</div><div class="val" id="s2Fail">0</div></div>
+          <div class="stat"><div class="lbl">Pool Alasan</div><div class="val" id="s2Reasons">8</div></div>
+          <div class="stat blue"><div class="lbl">Pool Pengirim</div><div class="val" id="s2Senders">50</div></div>
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="view" id="view-about">
+        <div class="hero"><h2>Tentang</h2><p>// report whatsapp panel</p></div>
+        <div class="panel">
+          <h3>Info</h3>
+          <p style="color:var(--mut);font-size:13px;line-height:1.8;font-family:'JetBrains Mono',monospace">
+            REPORT WHATSAPP — panel dispatch report (static, GitHub Pages).<br>
+            Login: User1123 / User1123<br>
+            Endpoint WA di-set via variabel <b style="color:var(--acc)">WA_ENDPOINT</b> & <b style="color:var(--acc)">WA_API_KEY</b> di blok CONFIG dalam script.<br>
+            Alasan & nomer pengirim dirotasi otomatis per-request.
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== CONFIG ====================
+const CONFIG = {
+  USER: "User1123",
+  PASS: "User1123",
+  // Ganti dengan endpoint report WA lo. Kosongkan = mode simulasi (log lokal).
+  WA_ENDPOINT: "",           // ex: "https://api-lo.com/report"
+  WA_API_KEY: "",
+  DELAY_MIN: 800,            // ms antar kirim
+  DELAY_MAX: 2200,
+  DEFAULT_COUNT: 30,
+  MAX_COUNT: 500,
+};
+// ================================================
+
+const REASONS = [
+  "Spam / pesan massal tidak diminta",
+  "Konten penipuan / phishing",
+  "Akun palsu / impersonasi",
+  "Pelecehan verbal",
+  "Konten tidak pantas",
+  "Scam jual-beli",
+  "Penyebaran malware / link berbahaya",
+  "Peretasan akun",
+];
+const SENDERS = Array.from({length:50},()=>"628"+Math.floor(1e8+Math.random()*9e8));
+
+// ===== Background particle canvas =====
+const cv = document.getElementById('bg-canvas'), ctx = cv.getContext('2d');
+let W,H,pts=[];
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+resize(); addEventListener('resize',resize);
+for(let i=0;i<70;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.6+.4});
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  for(const p of pts){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle='#22e6a5';ctx.fill();
+  }
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    const a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
+    if(d<130){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle='rgba(59,130,246,'+(1-d/130)*.18+')';ctx.stroke();}
+  }
+  requestAnimationFrame(draw);
+}
+draw();
+
+// ===== Toast =====
+const toastEl = document.getElementById('toast');
+let toastT;
+function toast(msg, err=false){
+  toastEl.textContent = msg; toastEl.className = 'toast show' + (err?' err':'');
+  clearTimeout(toastT); toastT = setTimeout(()=>toastEl.className='toast',2600);
+}
+
+// ===== Login =====
+const loginEl = document.getElementById('login');
+const appEl = document.getElementById('app');
+
+function doLogin(){
+  const u = document.getElementById('u').value.trim();
+  const p = document.getElementById('p').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent='';
+  if(u===CONFIG.USER && p===CONFIG.PASS){
+    sessionStorage.setItem('rw_auth','1');
+    loginEl.style.display='none';
+    appEl.style.display='block';
+    document.getElementById('uname').textContent = u;
+    refreshAll();
+  } else {
+    errEl.textContent = '// akses ditolak — kredensial salah';
+  }
+}
+document.getElementById('loginBtn').onclick = doLogin;
+document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('u').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('p').focus();});
+
+if(sessionStorage.getItem('rw_auth')==='1'){
+  loginEl.style.display='none';
+  appEl.style.display='block';
+  refreshAll();
+}
+
+document.getElementById('logoutBtn').onclick = ()=>{
+  sessionStorage.removeItem('rw_auth');
+  location.reload();
+};
+
+// ===== Hamburger & nav =====
+const sidebar = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+hamburger.onclick = ()=>{
+  sidebar.classList.toggle('open');
+  hamburger.classList.toggle('open');
+};
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.onclick = ()=>{
+    go(item.dataset.view);
+    if(innerWidth<900){sidebar.classList.remove('open');hamburger.classList.remove('open');}
+  };
+});
+function go(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const el = document.getElementById('view-'+view);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
+  if(view==='stats') refreshStats();
+}
+
+// ===== Job engine (client-side) =====
+const JOBS = [];  // {id,target,count,sent,failed,status,log,created,started,finished,cancel}
+const timers = {};
+
+function uid(){return Math.random().toString(36).slice(2,10);}
+function rnd(a,b){return a+Math.random()*(b-a);}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+
+async function sendOne(target){
+  const payload = {
+    target,
+    reason: pick(REASONS),
+    sender: pick(SENDERS),
+    ts: new Date().toISOString(),
+  };
+  if(!CONFIG.WA_ENDPOINT){
+    // Mode simulasi: 90% sukses
+    await new Promise(r=>setTimeout(r, rnd(CONFIG.DELAY_MIN,CONFIG.DELAY_MAX)));
+    return {ok: Math.random()<0.9, payload};
+  }
+  try{
+    const res = await fetch(CONFIG.WA_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CONFIG.WA_API_KEY},
+      body: JSON.stringify(payload),
+    });
+    return {ok:res.ok, payload, code:res.status};
+  }catch(e){
+    return {ok:false, payload, err:e.message};
+  }
+}
+
+async function runJob(job){
+  job.status='running';
+  job.started=new Date().toISOString();
+  renderJobs();
+  for(let i=0;i<job.count;i++){
+    if(job.cancel){job.status='cancelled';renderJobs();return;}
+    const r = await sendOne(job.target);
+    if(r.ok){job.sent++;job.log.push({i:i+1,ok:true,reason:r.payload.reason,sender:r.payload.sender});}
+    else{job.failed++;job.log.push({i:i+1,ok:false,err:r.err||('HTTP '+r.code)});}
+    if(job.log.length>40) job.log.shift();
+    renderJobs(); renderLive(job);
+  }
+  job.status = job.cancel?'cancelled':'done';
+  job.finished=new Date().toISOString();
+  renderJobs(); renderLive(job);
+  toast('Job selesai: '+job.sent+'/'+job.count+' terkirim');
+}
+
+function startReport(){
+  const target = document.getElementById('target').value.trim();
+  let count = parseInt(document.getElementById('count').value)||CONFIG.DEFAULT_COUNT;
+  count = Math.max(1,Math.min(count,CONFIG.MAX_COUNT));
+  if(!target){ toast('Target kosong',true); return; }
+  const job = {
+    id:uid(), target, count, sent:0, failed:0, status:'queued',
+    log:[], created:new Date().toISOString(), cancel:false,
+  };
+  JOBS.unshift(job);
+  renderJobs();
+  renderLive(job);
+  go('jobs');
+  runJob(job);
+  toast('Job dimulai → '+target);
+}
+document.getElementById('sendBtn').onclick = startReport;
+
+function cancelJob(id){
+  const j = JOBS.find(x=>x.id===id);
+  if(j){ j.cancel=true; j.status='cancelled'; renderJobs(); renderLive(j); toast('Job dibatalkan'); }
+}
+
+function renderLive(job){
+  const el = document.getElementById('liveJob');
+  if(!job){ el.className='empty'; el.textContent='Belum ada job aktif.'; return; }
+  el.className='';
+  const pct = job.count?Math.round((job.sent+job.failed)/job.count*100):0;
+  el.innerHTML = `
+    <div class="job">
+      <div class="head">
+        <div class="target">${esc(job.target)}</div>
+        <div class="status ${job.status}">${job.status}</div>
+      </div>
+      <div class="meta">
+        <span>Terkirim: <b>${job.sent}</b></span>
+        <span>Gagal: <b>${job.failed}</b></span>
+        <span>Total: <b>${job.count}</b></span>
+        <span>${pct}%</span>
+      </div>
+      <div class="progress"><div style="width:${pct}%"></div></div>
+      <div class="log">${job.log.slice().reverse().map(l=>l.ok?`<div class="ok">✓ #${l.i} → ${esc(l.reason)} · ${esc(l.sender)}</div>`:`<div class="fail">✗ #${l.i} → ${esc(l.err)}</div>`).join('')||'<div>waiting...</div>'}</div>
+    </div>`;
+}
+
+function renderJobs(){
+  const list = document.getElementById('jobsList');
+  if(!JOBS.length){ list.innerHTML='<div class="empty">Belum ada job.</div>'; refreshStats(); return; }
+  list.innerHTML = JOBS.map(j=>{
+    const pct = j.count?Math.round((j.sent+j.failed)/j.count*100):0;
+    return `<div class="job">
+      <div class="head">
+        <div class="target">${esc(j.target)}</div>
+        <div class="status ${j.status}">${j.status}</div>
+      </div>
+      <div class="meta">
+        <span>Terkirim: <b>${j.sent}</b></span>
+        <span>Gagal: <b>${j.failed}</b></span>
+        <span>Total: <b>${j.count}</b></span>
+        <span>${new Date(j.created).toLocaleTimeString()}</span>
+      </div>
+      <div class="progress"><div style="width:${pct}%"></div></div>
+      <div class="log">${j.log.slice().reverse().map(l=>l.ok?`<div class="ok">✓ #${l.i} → ${esc(l.reason)} · ${esc(l.sender)}</div>`:`<div class="fail">✗ #${l.i} → ${esc(l.err)}</div>`).join('')||'<div>waiting...</div>'}</div>
+      ${j.status==='running'?`<div class="btn-row" style="margin-top:10px"><button class="btn ghost" onclick="cancelJob('${j.id}')">Batalkan</button></div>`:''}
+    </div>`;
+  }).join('');
+  refreshStats();
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function refreshStats(){
+  const total = JOBS.length;
+  const sent = JOBS.reduce((a,b)=>a+b.sent,0);
+  const fail = JOBS.reduce((a,b)=>a+b.failed,0);
+  const run = JOBS.filter(j=>j.status==='running').length;
+  ['sJobs','s2Jobs'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=total;});
+  ['sSent','s2Sent'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=sent;});
+  ['sFail','s2Fail'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fail;});
+  document.getElementById('sRun').textContent = run;
+  document.getElementById('s2Reasons').textContent = REASONS.length;
+  document.getElementById('s2Senders').textContent = SENDERS.length;
+}
+
+function refreshAll(){ renderJobs(); refreshStats(); }
+
+// auto-refresh stats ringan
+setInterval(()=>{ if(document.getElementById('app').style.display==='block') refreshStats(); }, 3000);
+</script>
+</body>
+</html>
